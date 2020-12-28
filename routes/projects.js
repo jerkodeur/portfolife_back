@@ -6,12 +6,12 @@ const connexion = require('../conf')
 // fetch all projects
 router.get('/', (req, res) => {
     let sql = `
-        SELECT project.id, title, description, image, url_github, url_test, date,t.name, t.image_name
+        SELECT project.*,t.name, t.image_name
         FROM project
         JOIN project_techno pt ON pt.project_id=project.id
         JOIN techno t ON pt.techno_id=t.id
         GROUP BY project.id, t.id
-        ORDER BY project.date DESC
+        ORDER BY priority ASC, t.priority ASC
         `
 
     connexion.query(sql, (err, result) => {
