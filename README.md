@@ -1,7 +1,5 @@
-# jerkoFolio_front
+# Portfolife_back
 * My portfolio (and full of projects inside !) --> back side !
-
-![](https://github.com/jerkodeur/jerko-folio_front/blob/tweak-last-details/src/images/portfolio.png)
 
 ### Description
 Here is my portfolio, created for the forth checkpoint at the [Wild Code School](https://www.wildcodeschool.com/fr-FR).
