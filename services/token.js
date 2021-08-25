@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken')
 
 const generateToken = (req, res) => {
   const token = jwt.sign(
-    { id: req.id },
+    { id: req.id, pseudo: req.pseudo },
     process.env.SECRET,
     { algorithm: 'HS256' }
   )
