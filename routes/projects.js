@@ -1,69 +1,36 @@
 const express = require('express');
 
 const router = express.Router();
-
 const connexion = require('../conf');
+
+const projectModel = require('../models/project');
+
+const isDev = process.env.NODE_ENV === 'development';
 
 // fetch all projects
 router.get('/', (req, res) => {
-  const sql = `
-    SELECT project.*,t.name, t.image_name
-    FROM project
-    JOIN project_techno pt ON pt.project_id=project.id
-    JOIN techno t ON pt.techno_id=t.id
-    GROUP BY project.id, t.id
-    ORDER BY priority ASC, t.priority ASC
-    `;
-
-  connexion.query(sql, (err, result) => {
+  projectModel.findAll((err, projects) => {
     if (err) {
       return res.status('500').json({
         message: err.message,
-        sql: err.sql
+        sql: isDev && err.sql
       });
     }
-    // create a table with uniq project ids
-    const idProjects = result.reduce((acc, current) => {
-      if (!acc.includes(current.id)) acc.push(current.id);
-      return acc;
-    }, []);
-
-    // Initialize a new empty tab to receive uniq projects
-    const projects = [];
-
-    // For each project, we create an object which receive the main datas and an array of technologies
-    idProjects.map((projectId) => {
-      const currentProject = {};
-      const technos = [];
-      result
-        .filter((el) => el.id === projectId)
-        .map((el) => {
-          const { name, image_name: imageName, ...mainDatas } = el;
-          currentProject.mainDatas = mainDatas;
-          return technos.push({ name, image_name: imageName });
-        });
-      currentProject.technos = technos;
-      return projects.push(currentProject);
-    });
-    res.status(200).json(projects);
+    return res.json(projects);
   });
 });
 
 // fetch a particular projects
 router.get('/:id', (req, res) => {
-  connexion.query(
-    'SELECT * from project WHERE ID = ?',
-    req.params.id,
-    (err, result) => {
-      if (err) {
-        return res.status('500').json({
-          message: err.message,
-          sql: err.sql
-        });
-      }
-      return res.status(200).send(result);
+  projectModel.findOneById(req.params.id, (err, project) => {
+    if (err) {
+      return res.status('500').json({
+        message: err.message,
+        sql: isDev && err.sql
+      });
     }
-  );
+    return res.json(project);
+  });
 });
 
 // Post a new project
@@ -75,7 +42,7 @@ router.post('/', (req, res) => {
     if (err) {
       return res.status('500').json({
         message: err.message,
-        sql: err.sql
+        sql: isDev && err.sql
       });
     }
     // Add technos selected
@@ -90,7 +57,7 @@ router.post('/', (req, res) => {
       if (err) {
         return res.status(500).json({
           server: err.message,
-          sql: err.sql
+          sql: isDev && err.sql
         });
       }
     });
@@ -102,7 +69,7 @@ router.post('/', (req, res) => {
         if (err) {
           return res.status('500').json({
             message: err.message,
-            sql: err.sql
+            sql: isDev && err.sql
           });
         }
         const host = req.get('host');
