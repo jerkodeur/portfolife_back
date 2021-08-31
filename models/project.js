@@ -1,16 +1,18 @@
 const connexion = require('../conf');
 
 const getSelectSql = (findOne = false) => {
-  const where = findOne && 'where project.id = ?';
+  const where = findOne ? 'where project.id = ?' : '';
   return `
-        SELECT project.*,t.name, t.image_name
-        FROM project
-        JOIN project_techno pt ON pt.project_id=project.id
-        JOIN techno t ON pt.techno_id=t.id
-        ${where}
-        GROUP BY project.id, t.id
-        ORDER BY priority ASC, t.priority ASC
-        `;
+    SELECT
+    project.*,
+    t.name,t.image_name, t.id AS tid
+    FROM project
+    JOIN project_techno pt ON pt.project_id=project.id
+    JOIN techno t ON pt.techno_id=t.id
+    ${where}
+    GROUP BY project.id, t.id
+    ORDER BY priority ASC, t.priority ASC
+    `;
 };
 
 const formatResults = (result) => {
@@ -25,7 +27,7 @@ const formatResults = (result) => {
     const { name, image_name: imageName, ...mainDatas } = rows[0];
     const currentProject = { mainDatas };
     const currentProjectTechnos = rows.map(
-      ({ name, image_name: imageName }) => ({ name, image_name: imageName })
+      ({ name, image_name: imageName, tid }) => ({ id: tid, name, image_name: imageName })
     );
     currentProject.technos = currentProjectTechnos;
     return currentProject;
