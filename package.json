@@ -7,7 +7,7 @@
     "start": "node index",
     "start:dev": "nodemon",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint --fix *.js routes/ services/",
+    "lint": "eslint --fix *.js routes/ services/ models/",
     "format": "prettier --write *.js routes/ services/"
   },
   "repository": {
