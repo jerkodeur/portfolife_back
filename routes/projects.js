@@ -12,7 +12,7 @@ router.get('/', (req, res) => {
   projectModel.findAll((err, projects) => {
     if (err) {
       return res.status('500').json({
-        message: err.message,
+        message: isDev ? err.message : 'Erreur Serveur',
         sql: isDev && err.sql
       });
     }
@@ -25,7 +25,7 @@ router.get('/:id', (req, res) => {
   projectModel.findOneById(req.params.id, (err, project) => {
     if (err) {
       return res.status('500').json({
-        message: err.message,
+        message: isDev ? err.message : 'Erreur Serveur',
         sql: isDev && err.sql
       });
     }
@@ -41,7 +41,7 @@ router.post('/', (req, res) => {
   connexion.query('INSERT INTO project SET ?', project, (err, result) => {
     if (err) {
       return res.status('500').json({
-        message: err.message,
+        message: isDev ? err.message : 'Erreur Serveur',
         sql: isDev && err.sql
       });
     }
@@ -56,7 +56,7 @@ router.post('/', (req, res) => {
     connexion.query(sql, [listTechnos], (err, result) => {
       if (err) {
         return res.status(500).json({
-          server: err.message,
+          server: isDev ? err.message : 'Erreur Serveur',
           sql: isDev && err.sql
         });
       }
@@ -68,7 +68,7 @@ router.post('/', (req, res) => {
       (err, result2) => {
         if (err) {
           return res.status('500').json({
-            message: err.message,
+            message: isDev ? err.message : 'Erreur Serveur',
             sql: isDev && err.sql
           });
         }
