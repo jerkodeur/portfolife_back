@@ -6,7 +6,7 @@ const generateToken = (req, res) => {
   const token = jwt.sign(
     { id: req.id, pseudo: req.pseudo },
     process.env.SECRET,
-    { algorithm: 'HS256' }
+    { algorithm: 'HS256', expiresIn: 24 * 60 * 60 }
   );
   res.header('Access-Control-Expose-Headers', 'x-access-token');
   res.set('x-access-token', token);
@@ -15,14 +15,12 @@ const generateToken = (req, res) => {
 
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
-  console.log(authHeader);
   if (authHeader) {
     const token = authHeader.split(' ')[1];
     jwt.verify(token, secret, (err, result) => {
       if (err) {
         return res.status(403).json(err);
       }
-      // req.user = result;
       next();
     });
   } else {
