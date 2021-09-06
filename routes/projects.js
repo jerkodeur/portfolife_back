@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const connexion = require('../conf');
 
+const { verifyToken } = require('../services/token');
 const projectModel = require('../models/project');
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -34,11 +35,11 @@ router.get('/:id', (req, res) => {
 });
 
 // Post a new project
-router.post('/', (req, res) => {
-  const { project, techno } = req.body;
-  project.date = new Date(project.date);
+router.post('/', verifyToken, (req, res) => {
+  const { technos, ...project } = req.body;
+  const { imgPrefix, context, contextUrl, title, description, urlGithub, urlTest, nbImages, date, shortDescription, background, active } = project;
 
-  connexion.query('INSERT INTO project SET ?', project, (err, result) => {
+  connexion.query('INSERT INTO project (img_prefix, context, context_url, title, description, url_github, url_test, nb_images, date, short_description, background, active ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)', [imgPrefix, context, contextUrl, title, description, urlGithub, urlTest, nbImages, date, shortDescription, background, active], (err, result) => {
     if (err) {
       return res.status('500').json({
         message: isDev ? err.message : 'Erreur Serveur',
@@ -47,11 +48,10 @@ router.post('/', (req, res) => {
     }
     // Add technos selected
     const sql = 'INSERT INTO project_techno VALUES ?';
-    const listTechnos = [];
-    techno &&
-      techno.map((techno) =>
-        listTechnos.push([result.insertId, parseInt(techno)])
-      );
+    const listTechnos = technos.reduce((acc, technoId) => {
+      acc.push([result.insertId, parseInt(technoId)]);
+      return acc;
+    }, []);
 
     connexion.query(sql, [listTechnos], (err, result) => {
       if (err) {
@@ -61,6 +61,7 @@ router.post('/', (req, res) => {
         });
       }
     });
+
     // return create infos to the user
     connexion.query(
       'SELECT * FROM project WHERE id = ?',
@@ -74,7 +75,7 @@ router.post('/', (req, res) => {
         }
         const host = req.get('host');
         const location = `http://${host}/project/${result.insertId}`;
-        return res.status(201).set('location', location).json({ result2 });
+        return res.status(201).set('location', location).json({ 'new project': result2 });
       }
     );
   });
