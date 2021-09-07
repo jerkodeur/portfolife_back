@@ -1,6 +1,6 @@
 const connexion = require('../conf');
 
-const getSelectSql = (findOne = false) => {
+const getFullProjectSql = (findOne = false) => {
   const where = findOne ? 'where project.id = ?' : '';
   return `
     SELECT
@@ -36,7 +36,7 @@ const formatResults = (result) => {
 
 module.exports = {
   findAll (callback) {
-    const sql = getSelectSql();
+    const sql = getFullProjectSql();
     connexion.query(sql, (err, result) => {
       if (err) return callback(err);
       return callback(null, formatResults(result));
@@ -44,7 +44,7 @@ module.exports = {
   },
 
   findOneById (id, callback) {
-    const sql = getSelectSql(true);
+    const sql = getFullProjectSql(true);
     connexion.query(sql, [id], (err, result) => {
       if (err) return callback(err);
       return callback(null, formatResults(result)[0]);

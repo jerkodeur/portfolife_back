@@ -6,46 +6,33 @@ const connexion = require('../conf');
 const { verifyToken } = require('../services/token');
 const projectModel = require('../models/project');
 
-const isDev = process.env.NODE_ENV === 'development';
+const { requestErrors } = require('../handlers/request');
 
 // fetch all projects
 router.get('/', (req, res) => {
   projectModel.findAll((err, projects) => {
-    if (err) {
-      return res.status('500').json({
-        message: isDev ? err.message : 'Erreur Serveur',
-        sql: isDev && err.sql
-      });
-    }
-    return res.json(projects);
+    return err ? requestErrors(err, res) : res.json(projects);
   });
 });
 
 // fetch a particular projects
 router.get('/:id', (req, res) => {
   projectModel.findOneById(req.params.id, (err, project) => {
-    if (err) {
-      return res.status('500').json({
-        message: isDev ? err.message : 'Erreur Serveur',
-        sql: isDev && err.sql
-      });
-    }
-    return res.json(project);
+    return err ? requestErrors(err, res) : res.json(project);
   });
 });
 
 // Post a new project
 router.post('/', verifyToken, (req, res) => {
   const { technos, ...project } = req.body;
-  const { imgPrefix, context, contextUrl, title, description, urlGithub, urlTest, nbImages, date, shortDescription, background, active } = project;
+  const entries = {};
+  // convert camelCase keys to snake_case
+  for (const entry in project) {
+    entries[entry.split(/(?=[A-Z])/).join('_').toLowerCase()] = project[entry];
+  }
 
-  connexion.query('INSERT INTO project (img_prefix, context, context_url, title, description, url_github, url_test, nb_images, date, short_description, background, active ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)', [imgPrefix, context, contextUrl, title, description, urlGithub, urlTest, nbImages, date, shortDescription, background, active], (err, result) => {
-    if (err) {
-      return res.status('500').json({
-        message: isDev ? err.message : 'Erreur Serveur',
-        sql: isDev && err.sql
-      });
-    }
+  connexion.query(`INSERT INTO project (${[...Object.keys(entries)]}) VALUES (?)`, [Object.values(entries)], (err, result) => {
+    if (err) return requestErrors(err, res);
     // Add technos selected
     const sql = 'INSERT INTO project_techno VALUES ?';
     const listTechnos = technos.reduce((acc, technoId) => {
@@ -54,30 +41,25 @@ router.post('/', verifyToken, (req, res) => {
     }, []);
 
     connexion.query(sql, [listTechnos], (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          server: isDev ? err.message : 'Erreur Serveur',
-          sql: isDev && err.sql
-        });
-      }
+      if (err) return requestErrors(err, res);
     });
 
     // return create infos to the user
-    connexion.query(
-      'SELECT * FROM project WHERE id = ?',
-      result.insertId,
-      (err, result2) => {
-        if (err) {
-          return res.status('500').json({
-            message: isDev ? err.message : 'Erreur Serveur',
-            sql: isDev && err.sql
-          });
-        }
-        const host = req.get('host');
-        const location = `http://${host}/project/${result.insertId}`;
-        return res.status(201).set('location', location).json({ 'new project': result2 });
-      }
-    );
+    projectModel.findOneById(result.insertId, (err, project) => {
+      return err ? requestErrors(err, res) : res.json(project);
+    });
+  });
+});
+
+router.patch('/async/:id', verifyToken, (req, res) => {
+  const { key, value } = req.body;
+  const id = req.params.id;
+  connexion.query(`UPDATE project SET ${key} = ? WHERE id = ?`, [value, id], (err, result) => {
+    if (err) return requestErrors(err, res);
+
+    projectModel.findOneById(id, (err, project) => {
+      return err ? requestErrors(err, res) : res.json(project);
+    });
   });
 });
 
