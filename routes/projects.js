@@ -1,12 +1,11 @@
 const express = require('express');
-
 const router = express.Router();
-const connexion = require('../conf');
 
-const { verifyToken } = require('../services/token');
+const connexion = require('../conf');
 const projectModel = require('../models/project');
 
 const { requestErrors } = require('../handlers/request');
+const { verifyToken } = require('../services/token');
 
 // fetch all projects
 router.get('/', (req, res) => {
@@ -59,6 +58,15 @@ router.patch('/async/:id', verifyToken, (req, res) => {
 
     projectModel.findOneById(id, (err, project) => {
       return err ? requestErrors(err, res) : res.json(project);
+    });
+  });
+});
+
+router.delete('/:id', verifyToken, (req, res) => {
+  connexion.query('DELETE FROM project WHERE id = ?', req.params.id, (err, _) => {
+    if (err) return requestErrors(err, res);
+    projectModel.findAll((err, projects) => {
+      return err ? requestErrors(err, res) : res.json(projects);
     });
   });
 });
