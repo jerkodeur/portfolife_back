@@ -51,12 +51,12 @@ router.post('/', verifyToken, (req, res) => {
 });
 
 router.patch('/async/:id', verifyToken, (req, res) => {
-  const { key, value } = req.body;
-  const id = req.params.id;
-  connexion.query(`UPDATE project SET ${key} = ? WHERE id = ?`, [value, id], (err, result) => {
+  const key = req.body.key.split(/(?=[A-Z])/).join('_').toLowerCase();
+  const value = req.body.value !== '' ? req.body.value : null;
+  connexion.query(`UPDATE project SET ${key} = ? WHERE id = ?`, [value, req.params.id], (err, result) => {
     if (err) return requestErrors(err, res);
 
-    projectModel.findOneById(id, (err, project) => {
+    projectModel.findOneById(req.params.id, (err, project) => {
       return err ? requestErrors(err, res) : res.json(project);
     });
   });
