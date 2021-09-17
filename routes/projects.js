@@ -3,6 +3,7 @@ const router = express.Router();
 
 const connexion = require('../conf');
 const projectModel = require('../models/project');
+const technoModel = require('../models/techno');
 
 const { requestErrors } = require('../handlers/request');
 const { verifyToken } = require('../services/token');
@@ -33,16 +34,11 @@ router.post('/', verifyToken, (req, res) => {
   connexion.query(`INSERT INTO project (${[...Object.keys(entries)]}) VALUES (?)`, [Object.values(entries)], (err, result) => {
     if (err) return requestErrors(err, res);
     // Add technos selected
-    const sql = 'INSERT INTO project_techno VALUES ?';
     const listTechnos = technos.reduce((acc, technoId) => {
       acc.push([result.insertId, parseInt(technoId)]);
       return acc;
     }, []);
-
-    connexion.query(sql, [listTechnos], (err, result) => {
-      if (err) return requestErrors(err, res);
-    });
-
+    technoModel.addTechnosToProject(listTechnos, (err, _) => err && requestErrors(err, res));
     // return create infos to the user
     projectModel.findOneById(result.insertId, (err, project) => {
       return err ? requestErrors(err, res) : res.json(project);
@@ -50,6 +46,7 @@ router.post('/', verifyToken, (req, res) => {
   });
 });
 
+// Update one field from a project
 router.patch('/async/:id', verifyToken, (req, res) => {
   const key = req.body.key.split(/(?=[A-Z])/).join('_').toLowerCase();
   const value = req.body.value !== '' ? req.body.value : null;
@@ -62,12 +59,27 @@ router.patch('/async/:id', verifyToken, (req, res) => {
   });
 });
 
-router.delete('/:id', verifyToken, (req, res) => {
-  connexion.query('DELETE FROM project WHERE id = ?', req.params.id, (err, _) => {
+// Add one techno on a project
+router.post('/:project/addTechno', verifyToken, (req, res) => {
+  technoModel.addOneTechnoToProject(req.params.project, req.body.technoId, (err, _) => {
     if (err) return requestErrors(err, res);
-    projectModel.findAll((err, projects) => {
-      return err ? requestErrors(err, res) : res.json(projects);
-    });
+    return technoModel.findTechnosByProject(req.params.project, (err, technos) => err ? requestErrors(err, res) : res.json(technos));
+  });
+});
+
+// Remove one techno from a project
+router.delete('/:project/technos/:id', verifyToken, (req, res) => {
+  technoModel.removeOneTechnoFromProject(req.params.project, req.params.id, (err, _) => {
+    if (err) return requestErrors(err, res);
+    return technoModel.findTechnosByProject(req.params.project, (err, technos) => err ? requestErrors(err, res) : res.json(technos));
+  });
+});
+
+// Delete a full project
+router.delete('/:id', verifyToken, (req, res) => {
+  projectModel.deleteFullProject(req.params.id, (err, _) => {
+    if (err) return requestErrors(err, res);
+    return projectModel.findAll((err, projects) => err ? requestErrors(err, res) : res.json(projects));
   });
 });
 
