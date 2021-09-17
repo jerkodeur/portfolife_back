@@ -15,6 +15,8 @@ const getFullProjectSql = (findOne = false) => {
     `;
 };
 
+const deleteFullProjectSql = 'DELETE FROM project WHERE id = ?';
+
 const formatResults = (result) => {
   // Fetch uniq project ids
   const idProjects = result.reduce((acc, current) => {
@@ -36,18 +38,23 @@ const formatResults = (result) => {
 
 module.exports = {
   findAll (callback) {
-    const sql = getFullProjectSql();
-    connexion.query(sql, (err, result) => {
+    connexion.query(getFullProjectSql(), (err, result) => {
       if (err) return callback(err);
       return callback(null, formatResults(result));
     });
   },
 
   findOneById (id, callback) {
-    const sql = getFullProjectSql(true);
-    connexion.query(sql, [id], (err, result) => {
+    connexion.query(getFullProjectSql(true), [id], (err, result) => {
       if (err) return callback(err);
       return callback(null, formatResults(result)[0]);
+    });
+  },
+
+  deleteFullProject (id, callback) {
+    connexion.query(deleteFullProjectSql, [id], (err, result) => {
+      if (err) return callback(err);
+      return callback(null, result);
     });
   }
 };
