@@ -1,24 +1,33 @@
 const connexion = require('../conf');
 
+// CREATE
+const addProjectSql = (keys) => `INSERT INTO project (${keys}) VALUES (?)`;
+
+// READ
 const getFullProjectSql = (findOne = false) => {
-  const where = findOne ? 'where project.id = ?' : '';
+  const where = findOne ? 'where p.id = ?' : '';
   return `
     SELECT
-    project.*,
+    p.*,
     t.name,t.image_name, t.id AS tid
-    FROM project
-    JOIN project_techno pt ON pt.project_id=project.id
-    JOIN techno t ON pt.techno_id=t.id
+    FROM project p
+    LEFT JOIN project_techno pt ON pt.project_id=p.id
+    LEFT JOIN techno t ON pt.techno_id=t.id
     ${where}
-    GROUP BY project.id, t.id
-    ORDER BY priority ASC, t.priority ASC
+    GROUP BY p.id, tid
+    ORDER BY p.priority ASC
     `;
 };
 
+// UPDATE
+const updateOneByIdSql = (key) => `UPDATE project SET ${key} = ? WHERE id = ?`;
+
+// DELETE
 const deleteFullProjectSql = 'DELETE FROM project WHERE id = ?';
 
-const formatResults = (result) => {
-  // Fetch uniq project ids
+// DISPATCH RESULT
+const formatGetResults = (result) => {
+  // Get uniq project ids
   const idProjects = result.reduce((acc, current) => {
     if (!acc.includes(current.id)) acc.push(current.id);
     return acc;
@@ -37,22 +46,36 @@ const formatResults = (result) => {
 };
 
 module.exports = {
+  createProject (keys, values, callback) {
+    connexion.query(addProjectSql(keys), [values], (err, result) => {
+      if (err) return callback(err);
+      return callback(null, result.insertId);
+    });
+  },
+
+  deleteFullProject (id, callback) {
+    connexion.query(deleteFullProjectSql, [id], (err, result) => {
+      if (err) return callback(err);
+      return callback(null, result);
+    });
+  },
+
   findAll (callback) {
     connexion.query(getFullProjectSql(), (err, result) => {
       if (err) return callback(err);
-      return callback(null, formatResults(result));
+      return callback(null, formatGetResults(result));
     });
   },
 
   findOneById (id, callback) {
     connexion.query(getFullProjectSql(true), [id], (err, result) => {
       if (err) return callback(err);
-      return callback(null, formatResults(result)[0]);
+      return callback(null, formatGetResults(result)[0]);
     });
   },
 
-  deleteFullProject (id, callback) {
-    connexion.query(deleteFullProjectSql, [id], (err, result) => {
+  updateOneById ([key, value], id, callback) {
+    connexion.query(updateOneByIdSql(key), [value, id], (err, result) => {
       if (err) return callback(err);
       return callback(null, result);
     });

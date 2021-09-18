@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 
-const connexion = require('../conf');
 const projectModel = require('../models/project');
 const technoModel = require('../models/techno');
 
 const { requestErrors } = require('../handlers/request');
 const { verifyToken } = require('../services/token');
+const { camelToSnakeCase } = require('../services/helpers');
 
 // fetch all projects
 router.get('/', (req, res) => {
@@ -28,34 +28,32 @@ router.post('/', verifyToken, (req, res) => {
   const entries = {};
   // convert camelCase keys to snake_case
   for (const entry in project) {
-    entries[entry.split(/(?=[A-Z])/).join('_').toLowerCase()] = project[entry];
+    entries[camelToSnakeCase(entry)] = project[entry];
   }
 
-  connexion.query(`INSERT INTO project (${[...Object.keys(entries)]}) VALUES (?)`, [Object.values(entries)], (err, result) => {
+  projectModel.createProject(Object.keys(entries), Object.values(entries), (err, insertId) => {
     if (err) return requestErrors(err, res);
-    // Add technos selected
+
     const listTechnos = technos.reduce((acc, technoId) => {
-      acc.push([result.insertId, parseInt(technoId)]);
+      acc.push([insertId, parseInt(technoId)]);
       return acc;
     }, []);
-    technoModel.addTechnosToProject(listTechnos, (err, _) => err && requestErrors(err, res));
-    // return create infos to the user
-    projectModel.findOneById(result.insertId, (err, project) => {
-      return err ? requestErrors(err, res) : res.json(project);
+
+    technoModel.addTechnosToProject(listTechnos, (err, _) => {
+      if (err) return requestErrors(err, res);
+      // return create infos to the user
+      return projectModel.findOneById(insertId, (err, project) => err ? requestErrors(err, res) : res.json(project));
     });
   });
 });
 
 // Update one field from a project
 router.patch('/async/:id', verifyToken, (req, res) => {
-  const key = req.body.key.split(/(?=[A-Z])/).join('_').toLowerCase();
+  const key = camelToSnakeCase(req.body.key);
   const value = req.body.value !== '' ? req.body.value : null;
-  connexion.query(`UPDATE project SET ${key} = ? WHERE id = ?`, [value, req.params.id], (err, result) => {
+  projectModel.updateOneById([key, value], req.params.id, (err, _) => {
     if (err) return requestErrors(err, res);
-
-    projectModel.findOneById(req.params.id, (err, project) => {
-      return err ? requestErrors(err, res) : res.json(project);
-    });
+    return projectModel.findOneById(req.params.id, (err, project) => err ? requestErrors(err, res) : res.json(project));
   });
 });
 
