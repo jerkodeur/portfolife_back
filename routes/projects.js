@@ -10,16 +10,12 @@ const { camelToSnakeCase } = require('../services/helpers');
 
 // fetch all projects
 router.get('/', (req, res) => {
-  projectModel.findAll((err, projects) => {
-    return err ? requestErrors(err, res) : res.json(projects);
-  });
+  projectModel.findAll((err, projects) => err ? requestErrors(err, res) : res.json(projects));
 });
 
 // fetch a particular projects
 router.get('/:id', (req, res) => {
-  projectModel.findOneById(req.params.id, (err, project) => {
-    return err ? requestErrors(err, res) : res.json(project);
-  });
+  projectModel.findOneById(req.params.id, (err, project) => err ? requestErrors(err, res) : res.json(project));
 });
 
 // Post a new project
@@ -42,7 +38,7 @@ router.post('/', verifyToken, (req, res) => {
     technoModel.addTechnosToProject(listTechnos, (err, _) => {
       if (err) return requestErrors(err, res);
       // return create infos to the user
-      return projectModel.findOneById(insertId, (err, project) => err ? requestErrors(err, res) : res.json(project));
+      projectModel.findOneById(insertId, (err, project) => err ? requestErrors(err, res) : res.json(project));
     });
   });
 });
@@ -53,7 +49,7 @@ router.patch('/async/:id', verifyToken, (req, res) => {
   const value = req.body.value !== '' ? req.body.value : null;
   projectModel.updateOneById([key, value], req.params.id, (err, _) => {
     if (err) return requestErrors(err, res);
-    return projectModel.findOneById(req.params.id, (err, project) => err ? requestErrors(err, res) : res.json(project));
+    projectModel.findOneById(req.params.id, (err, project) => err ? requestErrors(err, res) : res.json(project));
   });
 });
 
@@ -61,15 +57,15 @@ router.patch('/async/:id', verifyToken, (req, res) => {
 router.post('/:project/addTechno', verifyToken, (req, res) => {
   technoModel.addOneTechnoToProject(req.params.project, req.body.technoId, (err, _) => {
     if (err) return requestErrors(err, res);
-    return technoModel.findTechnosByProject(req.params.project, (err, technos) => err ? requestErrors(err, res) : res.json(technos));
+    technoModel.findTechnosByProject(req.params.project, (err, technos) => err ? requestErrors(err, res) : res.json(technos));
   });
 });
 
 // Remove one techno from a project
 router.delete('/:project/technos/:id', verifyToken, (req, res) => {
-  technoModel.removeOneTechnoFromProject(req.params.project, req.params.id, (err, _) => {
+  technoModel.removeTechnoFromProject(req.params.project, req.params.id, (err, _) => {
     if (err) return requestErrors(err, res);
-    return technoModel.findTechnosByProject(req.params.project, (err, technos) => err ? requestErrors(err, res) : res.json(technos));
+    technoModel.findTechnosByProject(req.params.project, (err, technos) => err ? requestErrors(err, res) : res.json(technos));
   });
 });
 
@@ -77,7 +73,7 @@ router.delete('/:project/technos/:id', verifyToken, (req, res) => {
 router.delete('/:id', verifyToken, (req, res) => {
   projectModel.deleteFullProject(req.params.id, (err, _) => {
     if (err) return requestErrors(err, res);
-    return projectModel.findAll((err, projects) => err ? requestErrors(err, res) : res.json(projects));
+    projectModel.findAll((err, projects) => err ? requestErrors(err, res) : res.json(projects));
   });
 });
 
