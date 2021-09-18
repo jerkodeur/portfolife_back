@@ -1,35 +1,19 @@
 const express = require('express');
-
 const router = express.Router();
 
-const connexion = require('../conf');
+const technoModel = require('../models/techno');
 
-const isDev = process.env.NODE_ENV === 'development';
 const { verifyToken } = require('../services/token');
+const { requestErrors } = require('../handlers/request');
 
 router.get('/', verifyToken, (req, res) => {
-  connexion.query('SELECT * from techno', (err, result) => {
-    if (err) {
-      return res.status('500').json({
-        message: err.message,
-        sql: isDev && err.sql
-      });
-    }
-    return res.status(200).json(result);
-  });
+  technoModel.findAllTechnos((err, technos) => err ? requestErrors(err, res) : res.json(technos));
 });
 
 router.post('/', verifyToken, (req, res) => {
-  connexion.query('INSERT INTO techno SET ?', [{ ...req.body }], (err, result) => {
-    if (err) {
-      return res.status('500').json({
-        message: isDev ? err.message : 'Erreur Serveur',
-        sql: isDev && err.sql
-      });
-    }
-    const host = req.get('host');
-    const location = `http://${host}/project/${result.insertId}`;
-    return res.status(201).set('location', location).json({ result });
+  technoModel.createTechno({ ...req.body }, (err, resultId) => {
+    if (err) return requestErrors(err, res);
+    technoModel.findTechnoById(resultId, (err, newTechno) => err ? requestErrors(err, res) : res.json(newTechno));
   });
 });
 
