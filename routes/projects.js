@@ -10,12 +10,16 @@ const { camelToSnakeCase } = require('../services/helpers');
 
 // fetch all projects
 router.get('/', (req, res) => {
-  projectModel.findAll((err, projects) => err ? requestErrors(err, res) : res.json(projects));
+  projectModel.findAll((err, projects) =>
+    err ? requestErrors(err, res) : res.json(projects)
+  );
 });
 
 // fetch a particular projects
 router.get('/:id', (req, res) => {
-  projectModel.findOneById(req.params.id, (err, project) => err ? requestErrors(err, res) : res.json(project));
+  projectModel.findOneById(req.params.id, (err, project) =>
+    err ? requestErrors(err, res) : res.json(project)
+  );
 });
 
 // Post a new project
@@ -27,20 +31,26 @@ router.post('/', verifyToken, (req, res) => {
     entries[camelToSnakeCase(entry)] = project[entry];
   }
 
-  projectModel.createProject(Object.keys(entries), Object.values(entries), (err, insertId) => {
-    if (err) return requestErrors(err, res);
-
-    const listTechnos = technos.reduce((acc, technoId) => {
-      acc.push([insertId, parseInt(technoId)]);
-      return acc;
-    }, []);
-
-    technoModel.addTechnosToProject(listTechnos, (err, _) => {
+  projectModel.createProject(
+    Object.keys(entries),
+    Object.values(entries),
+    (err, insertId) => {
       if (err) return requestErrors(err, res);
-      // return create infos to the user
-      projectModel.findOneById(insertId, (err, project) => err ? requestErrors(err, res) : res.json(project));
-    });
-  });
+
+      const listTechnos = technos.reduce((acc, technoId) => {
+        acc.push([insertId, parseInt(technoId)]);
+        return acc;
+      }, []);
+
+      technoModel.addTechnosToProject(listTechnos, (err, _) => {
+        if (err) return requestErrors(err, res);
+        // return create infos to the user
+        projectModel.findOneById(insertId, (err, project) =>
+          err ? requestErrors(err, res) : res.json(project)
+        );
+      });
+    }
+  );
 });
 
 // Update one field from a project
@@ -49,23 +59,31 @@ router.patch('/async/:id', verifyToken, (req, res) => {
   const value = req.body.value !== '' ? req.body.value : null;
   projectModel.updateOneById([key, value], req.params.id, (err, _) => {
     if (err) return requestErrors(err, res);
-    projectModel.findOneById(req.params.id, (err, project) => err ? requestErrors(err, res) : res.json(project));
+    projectModel.findOneById(req.params.id, (err, project) =>
+      err ? requestErrors(err, res) : res.json(project)
+    );
   });
 });
 
 // Add one techno on a project
-router.post('/:project/addTechno', verifyToken, (req, res) => {
-  technoModel.addOneTechnoToProject(req.params.project, req.body.technoId, (err, _) => {
+router.post('/:project/addTechno/:technoId', verifyToken, (req, res) => {
+  const { project, technoId } = req.params;
+  technoModel.addOneTechnoToProject(project, technoId, (err, _) => {
     if (err) return requestErrors(err, res);
-    technoModel.findTechnosByProject(req.params.project, (err, technos) => err ? requestErrors(err, res) : res.json(technos));
+    technoModel.findTechnosByProject(req.params.project, (err, technos) =>
+      err ? requestErrors(err, res) : res.json(technos)
+    );
   });
 });
 
 // Remove one techno from a project
 router.delete('/:project/technos/:id', verifyToken, (req, res) => {
-  technoModel.removeTechnoFromProject(req.params.project, req.params.id, (err, _) => {
+  const { project, id } = req.params;
+  technoModel.removeTechnoFromProject(project, id, (err, _) => {
     if (err) return requestErrors(err, res);
-    technoModel.findTechnosByProject(req.params.project, (err, technos) => err ? requestErrors(err, res) : res.json(technos));
+    technoModel.findTechnosByProject(project, (err, technos) =>
+      err ? requestErrors(err, res) : res.json(technos)
+    );
   });
 });
 
@@ -73,7 +91,9 @@ router.delete('/:project/technos/:id', verifyToken, (req, res) => {
 router.delete('/:id', verifyToken, (req, res) => {
   projectModel.deleteFullProject(req.params.id, (err, _) => {
     if (err) return requestErrors(err, res);
-    projectModel.findAll((err, projects) => err ? requestErrors(err, res) : res.json(projects));
+    projectModel.findAll((err, projects) =>
+      err ? requestErrors(err, res) : res.json(projects)
+    );
   });
 });
 
