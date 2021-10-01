@@ -54,7 +54,7 @@ router.post('/', verifyToken, (req, res) => {
 });
 
 // Update one field from a project
-router.patch('/async/:id', verifyToken, (req, res) => {
+router.put('/async/:id', verifyToken, (req, res) => {
   const key = camelToSnakeCase(req.body.key);
   const value = req.body.value !== '' ? req.body.value : null;
   projectModel.updateOneById([key, value], req.params.id, (err, _) => {
