@@ -1,114 +1,98 @@
 const express = require('express');
-
 const router = express.Router();
 
-const connexion = require('../conf');
+const projectModel = require('../models/project');
+const technoModel = require('../models/techno');
+
+const { requestErrors } = require('../handlers/request');
+const { verifyToken } = require('../services/token');
+const { camelToSnakeCase } = require('../services/helpers');
 
 // fetch all projects
 router.get('/', (req, res) => {
-  const sql = `
-    SELECT project.*,t.name, t.image_name
-    FROM project
-    JOIN project_techno pt ON pt.project_id=project.id
-    JOIN techno t ON pt.techno_id=t.id
-    GROUP BY project.id, t.id
-    ORDER BY priority ASC, t.priority ASC
-    `;
-
-  connexion.query(sql, (err, result) => {
-    if (err) {
-      return res.status('500').json({
-        message: err.message,
-        sql: err.sql
-      });
-    }
-    // create a table with uniq project ids
-    const idProjects = result.reduce((acc, current) => {
-      if (!acc.includes(current.id)) acc.push(current.id);
-      return acc;
-    }, []);
-
-    // Initialize a new empty tab to receive uniq projects
-    const projects = [];
-
-    // For each project, we create an object which receive the main datas and an array of technologies
-    idProjects.map((projectId) => {
-      const currentProject = {};
-      const technos = [];
-      result
-        .filter((el) => el.id === projectId)
-        .map((el) => {
-          const { name, image_name: imageName, ...mainDatas } = el;
-          currentProject.mainDatas = mainDatas;
-          return technos.push({ name, image_name: imageName });
-        });
-      currentProject.technos = technos;
-      return projects.push(currentProject);
-    });
-    res.status(200).json(projects);
-  });
+  projectModel.findAll((err, projects) =>
+    err ? requestErrors(err, res) : res.json(projects)
+  );
 });
 
 // fetch a particular projects
 router.get('/:id', (req, res) => {
-  connexion.query(
-    'SELECT * from project WHERE ID = ?',
-    req.params.id,
-    (err, result) => {
-      if (err) {
-        return res.status('500').json({
-          message: err.message,
-          sql: err.sql
-        });
-      }
-      return res.status(200).send(result);
-    }
+  projectModel.findOneById(req.params.id, (err, project) =>
+    err ? requestErrors(err, res) : res.json(project)
   );
 });
 
 // Post a new project
-router.post('/', (req, res) => {
-  const { project, techno } = req.body;
-  project.date = new Date(project.date);
+router.post('/', verifyToken, (req, res) => {
+  const { technos, ...project } = req.body;
+  const entries = {};
+  // convert camelCase keys to snake_case
+  for (const entry in project) {
+    entries[camelToSnakeCase(entry)] = project[entry];
+  }
 
-  connexion.query('INSERT INTO project SET ?', project, (err, result) => {
-    if (err) {
-      return res.status('500').json({
-        message: err.message,
-        sql: err.sql
+  projectModel.createProject(
+    Object.keys(entries),
+    Object.values(entries),
+    (err, insertId) => {
+      if (err) return requestErrors(err, res);
+
+      const listTechnos = technos.reduce((acc, technoId) => {
+        acc.push([insertId, parseInt(technoId)]);
+        return acc;
+      }, []);
+
+      technoModel.addTechnosToProject(listTechnos, (err, _) => {
+        if (err) return requestErrors(err, res);
+        // return create infos to the user
+        projectModel.findOneById(insertId, (err, project) =>
+          err ? requestErrors(err, res) : res.json(project)
+        );
       });
     }
-    // Add technos selected
-    const sql = 'INSERT INTO project_techno VALUES ?';
-    const listTechnos = [];
-    techno &&
-      techno.map((techno) =>
-        listTechnos.push([result.insertId, parseInt(techno)])
-      );
+  );
+});
 
-    connexion.query(sql, [listTechnos], (err, result) => {
-      if (err) {
-        return res.status(500).json({
-          server: err.message,
-          sql: err.sql
-        });
-      }
-    });
-    // return create infos to the user
-    connexion.query(
-      'SELECT * FROM project WHERE id = ?',
-      result.insertId,
-      (err, result2) => {
-        if (err) {
-          return res.status('500').json({
-            message: err.message,
-            sql: err.sql
-          });
-        }
-        const host = req.get('host');
-        const location = `http://${host}/project/${result.insertId}`;
-        return res.status(201).set('location', location).json({ result2 });
-      }
+// Update one field from a project
+router.put('/async/:id', verifyToken, (req, res) => {
+  const key = camelToSnakeCase(req.body.key);
+  const value = req.body.value !== '' ? req.body.value : null;
+  projectModel.updateOneById([key, value], req.params.id, (err, _) => {
+    if (err) return requestErrors(err, res);
+    projectModel.findOneById(req.params.id, (err, project) =>
+      err ? requestErrors(err, res) : res.json(project)
+    );
+  });
+});
+
+// Add one techno on a project
+router.post('/:project/addTechno/:technoId', verifyToken, (req, res) => {
+  const { project, technoId } = req.params;
+  technoModel.addOneTechnoToProject(project, technoId, (err, _) => {
+    if (err) return requestErrors(err, res);
+    technoModel.findTechnosByProject(req.params.project, (err, technos) =>
+      err ? requestErrors(err, res) : res.json(technos)
+    );
+  });
+});
+
+// Remove one techno from a project
+router.delete('/:project/technos/:id', verifyToken, (req, res) => {
+  const { project, id } = req.params;
+  technoModel.removeTechnoFromProject(project, id, (err, _) => {
+    if (err) return requestErrors(err, res);
+    technoModel.findTechnosByProject(project, (err, technos) =>
+      err ? requestErrors(err, res) : res.json(technos)
+    );
+  });
+});
+
+// Delete a full project
+router.delete('/:id', verifyToken, (req, res) => {
+  projectModel.deleteFullProject(req.params.id, (err, _) => {
+    if (err) return requestErrors(err, res);
+    projectModel.findAll((err, projects) =>
+      err ? requestErrors(err, res) : res.json(projects)
     );
   });
 });
