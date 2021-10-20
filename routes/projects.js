@@ -9,7 +9,7 @@ const { verifyToken } = require('../services/token');
 const { camelToSnakeCase } = require('../services/helpers');
 
 // fetch all projects
-router.get('/', verifyToken, (_, res) => {
+router.get('/', (_, res) => {
   projectModel.findAll((err, projects) =>
     err ? requestErrors(err, res) : res.json(projects)
   );
