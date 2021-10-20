@@ -14,7 +14,7 @@ const generateToken = (req, res) => {
 };
 
 const verifyToken = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  const authHeader = req.headers.Authorization;
   if (authHeader) {
     const token = authHeader.split(' ')[1];
     jwt.verify(token, secret, (err, result) => {
