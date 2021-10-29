@@ -6,7 +6,7 @@ const requestErrors = (err, req, res, errStatus = 500) => {
   console.log(req.role, admin, process.env.NODE_ENV);
   return res.status(errStatus).json({
     message: err.message,
-    sql: admin && err.sql
+    sql: err.sql
   });
 };
 
