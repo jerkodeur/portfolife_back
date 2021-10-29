@@ -4,8 +4,8 @@ const isDev = process.env.NODE_ENV === 'development';
 const requestErrors = (req, err, res, errStatus = 500) => {
   const admin = isDev || req.role === 'superadmin';
   return res.status(errStatus).json({
-    message: admin ? err.message : 'Erreur serveur.',
-    sql: admin ? err.sql : 'Erreur sql'
+    message: admin ? err.message : 'Erreur serveur...',
+    sql: admin ? err.sql : 'Erreur sql...'
   });
 };
 
