@@ -13,9 +13,10 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(cors('*'));
 
-app.use('/admins', getUserRole, routes.admins);
-app.use('/projects', getUserRole, routes.projects);
-app.use('/technos', getUserRole, routes.technos);
+app.all('*', getUserRole);
+app.use('/admins', routes.admins);
+app.use('/projects', routes.projects);
+app.use('/technos', routes.technos);
 
 app.listen(process.env.PORT, (err) => {
   if (err) {
