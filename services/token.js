@@ -6,7 +6,7 @@ const generateToken = (req, res) => {
   const token = jwt.sign(
     { id: req.id, pseudo: req.pseudo },
     process.env.SECRET,
-    { algorithm: 'HS256', expiresIn: 24 * 60 * 60 }
+    { algorithm: 'HS256', expiresIn: '6h' }
   );
   res.header('Access-Control-Expose-Headers', 'x-access-token');
   res.set('x-access-token', token);
