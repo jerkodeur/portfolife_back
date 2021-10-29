@@ -7,7 +7,6 @@ const technoModel = require('../models/techno');
 const { requestErrors } = require('../handlers/request');
 const { verifyToken } = require('../services/token');
 const { camelToSnakeCase } = require('../services/helpers');
-const { getRoles } = require('../services/verify');
 
 // fetch all projects
 router.get('/', (req, res) => {
@@ -24,7 +23,7 @@ router.get('/:id', (req, res) => {
 });
 
 // Post a new project
-router.post('/', verifyToken, getRoles, (req, res) => {
+router.post('/', verifyToken, (req, res) => {
   const { technos, ...project } = req.body;
   const entries = {};
   // convert camelCase keys to snake_case
