@@ -5,8 +5,9 @@ const requestErrors = (err, req, res, errStatus = 500) => {
   const admin = isDev || req.role === 'superadmin';
   console.log(req.role, admin, process.env.NODE_ENV);
   return res.status(errStatus).json({
+    err: err,
     message: err.message,
-    sql: admin && err.sql
+    sql: err.sql
   });
 };
 
