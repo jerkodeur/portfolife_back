@@ -6,17 +6,17 @@ const technoModel = require('../models/techno');
 const { verifyToken } = require('../services/token');
 const { requestErrors } = require('../handlers/request');
 
-router.get('/', (_, res) => {
+router.get('/', (req, res) => {
   technoModel.findAllTechnos((err, technos) =>
-    err ? requestErrors(err, res) : res.json(technos)
+    err ? requestErrors(req, err, res) : res.json(technos)
   );
 });
 
 router.post('/', verifyToken, (req, res) => {
   technoModel.createTechno({ ...req.body }, (err, resultId) => {
-    if (err) return requestErrors(err, res);
+    if (err) return requestErrors(req, err, res);
     technoModel.findTechnoById(resultId, (err, newTechno) =>
-      err ? requestErrors(err, res) : res.json(newTechno)
+      err ? requestErrors(req, err, res) : res.json(newTechno)
     );
   });
 });

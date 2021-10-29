@@ -9,16 +9,16 @@ const { verifyToken } = require('../services/token');
 const { camelToSnakeCase } = require('../services/helpers');
 
 // fetch all projects
-router.get('/', (_, res) => {
+router.get('/', (req, res) => {
   projectModel.findAll((err, projects) =>
-    err ? requestErrors(err, res) : res.json(projects)
+    err ? requestErrors(req, err, res) : res.json(projects)
   );
 });
 
 // fetch a particular projects
 router.get('/:id', (req, res) => {
   projectModel.findOneById(req.params.id, (err, project) =>
-    err ? requestErrors(err, res) : res.json(project)
+    err ? requestErrors(req, err, res) : res.json(project)
   );
 });
 
@@ -35,7 +35,7 @@ router.post('/', verifyToken, (req, res) => {
     Object.keys(entries),
     Object.values(entries),
     (err, insertId) => {
-      if (err) return requestErrors(err, res);
+      if (err) return requestErrors(req, err, res);
 
       const listTechnos = technos.reduce((acc, technoId) => {
         acc.push([insertId, parseInt(technoId)]);
@@ -43,10 +43,10 @@ router.post('/', verifyToken, (req, res) => {
       }, []);
 
       technoModel.addTechnosToProject(listTechnos, (err, _) => {
-        if (err) return requestErrors(err, res);
+        if (err) return requestErrors(req, err, res);
         // return create infos to the user
         projectModel.findOneById(insertId, (err, project) =>
-          err ? requestErrors(err, res) : res.json(project)
+          err ? requestErrors(req, err, res) : res.json(project)
         );
       });
     }
@@ -58,9 +58,9 @@ router.put('/async/:id', verifyToken, (req, res) => {
   const key = camelToSnakeCase(req.body.key);
   const value = req.body.value !== '' ? req.body.value : null;
   projectModel.updateOneById([key, value], req.params.id, (err, _) => {
-    if (err) return requestErrors(err, res);
+    if (err) return requestErrors(req, err, res);
     projectModel.findOneById(req.params.id, (err, project) =>
-      err ? requestErrors(err, res) : res.json(project)
+      err ? requestErrors(req, err, res) : res.json(project)
     );
   });
 });
@@ -69,9 +69,9 @@ router.put('/async/:id', verifyToken, (req, res) => {
 router.post('/:project/addTechno/:technoId', verifyToken, (req, res) => {
   const { project, technoId } = req.params;
   technoModel.addOneTechnoToProject(project, technoId, (err, _) => {
-    if (err) return requestErrors(err, res);
+    if (err) return requestErrors(req, err, res);
     technoModel.findTechnosByProject(req.params.project, (err, technos) =>
-      err ? requestErrors(err, res) : res.json(technos)
+      err ? requestErrors(req, err, res) : res.json(technos)
     );
   });
 });
@@ -80,9 +80,9 @@ router.post('/:project/addTechno/:technoId', verifyToken, (req, res) => {
 router.delete('/:project/technos/:id', verifyToken, (req, res) => {
   const { project, id } = req.params;
   technoModel.removeTechnoFromProject(project, id, (err, _) => {
-    if (err) return requestErrors(err, res);
+    if (err) return requestErrors(req, err, res);
     technoModel.findTechnosByProject(project, (err, technos) =>
-      err ? requestErrors(err, res) : res.json(technos)
+      err ? requestErrors(req, err, res) : res.json(technos)
     );
   });
 });
@@ -90,9 +90,9 @@ router.delete('/:project/technos/:id', verifyToken, (req, res) => {
 // Delete a full project
 router.delete('/:id', verifyToken, (req, res) => {
   projectModel.deleteFullProject(req.params.id, (err, _) => {
-    if (err) return requestErrors(err, res);
+    if (err) return requestErrors(req, err, res);
     projectModel.findAll((err, projects) =>
-      err ? requestErrors(err, res) : res.json(projects)
+      err ? requestErrors(req, err, res) : res.json(projects)
     );
   });
 });

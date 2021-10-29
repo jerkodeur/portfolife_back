@@ -4,9 +4,9 @@ const secret = process.env.SECRET;
 
 const generateToken = (req, res) => {
   const token = jwt.sign(
-    { id: req.id, pseudo: req.pseudo },
+    { id: req.id, pseudo: req.pseudo, role: req.role },
     process.env.SECRET,
-    { algorithm: 'HS256', expiresIn: '6h' }
+    { algorithm: 'HS256', expiresIn: '2h' }
   );
   res.header('Access-Control-Expose-Headers', 'x-access-token');
   res.set('x-access-token', token);
