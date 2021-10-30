@@ -31,7 +31,7 @@ const getUserRole = (req, res, next) => {
   if (authHeader) {
     const token = authHeader.split(' ')[1];
     jwt.verify(token, secret, (err, result) => {
-      if (err) return console.log('err');
+      if (err) return console.log(err);
       req.role = result.role;
     });
   }
