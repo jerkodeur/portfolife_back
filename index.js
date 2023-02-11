@@ -11,23 +11,26 @@ const { getUserRole } = require('./services/verify');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const corsOptions = {
-  origin: '*',
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  allowedHeaders: [
-    'Access-Control-Allow-Headers',
-    'Accept, Content-Type',
-    'Access-Control-Allow-Origin'
-  ]
-};
+// const corsOptions = {
+//   origin: '*',
+//   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+//   allowedHeaders: [
+//     'Access-Control-Allow-Headers',
+//     'Accept, Content-Type',
+//     'Access-Control-Allow-Origin'
+//   ]
+// };
 
-app.use('*', cors(corsOptions));
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  next();
+});
 
-app.options('*', cors(corsOptions));
-app.all('*', cors(corsOptions), getUserRole);
-app.use('/admins', cors(corsOptions), routes.admins);
-app.use('/projects', cors(corsOptions), routes.projects);
-app.use('/technos', cors(corsOptions), routes.technos);
+app.options('*', cors());
+app.all('*', getUserRole);
+app.use('/admins', routes.admins);
+app.use('/projects', routes.projects);
+app.use('/technos', routes.technos);
 
 app.listen(process.env.PORT, (err) => {
   if (err) {
