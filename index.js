@@ -20,10 +20,7 @@ app.use((req, res, next) => {
   );
 
   if (req.method === 'OPTIONS') {
-    res.setHeader(
-      'Access-Control-Allow-Headers',
-      'Origin, X-Requested-With, Content-Type, Accept'
-    );
+    res.header('Access-Control-Allow-Headers', '*');
   }
 
   next();
