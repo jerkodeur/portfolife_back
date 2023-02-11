@@ -13,10 +13,17 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'GET, POST, PUT, PATCH, DELETE, OPTIONS, DELETE'
+  );
 
   if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Headers', 'Accept, Content-Type');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'X-Requested-With, content-type'
+    );
   }
 
   next();
