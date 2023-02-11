@@ -11,9 +11,18 @@ const { getUserRole } = require('./services/verify');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(cors('*'));
+app.use(
+  cors({
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: [
+      'Access-Control-Allow-Headers',
+      'Accept, Content-Type',
+      'Access-Control-Allow-Origin'
+    ]
+  })
+);
 
-app.options('*', cors());
 app.all('*', getUserRole);
 app.use('/admins', routes.admins);
 app.use('/projects', routes.projects);
