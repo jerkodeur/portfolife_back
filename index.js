@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const cors = require('cors');
+const proxy = require('express-http-proxy');
 const express = require('express');
 
 const app = express();
@@ -10,10 +11,10 @@ const { getUserRole } = require('./services/verify');
 
 app.use(express.urlencoded({ extended: true }));
 
+app.use('/proxy', proxy('www.portfolife.herokuapp.com'));
+
 app.use(cors());
 app.use((req, res, next) => {
-  res.set('Access-Control-Allow-Origin', '*');
-  res.send({ msg: 'This has CORS enabled' });
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Credentials', true);
   res.header(
