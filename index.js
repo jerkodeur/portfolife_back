@@ -26,10 +26,10 @@ app.use((req, res, next) => {
   next();
 });
 
-app.all('*', getUserRole);
-app.use('/admins', routes.admins);
-app.use('/projects', routes.projects);
-app.use('/technos', routes.technos);
+app.all('*', cors(), getUserRole);
+app.use('/admins', cors(), routes.admins);
+app.use('/projects', cors(), routes.projects);
+app.use('/technos', cors(), routes.technos);
 
 app.listen(process.env.PORT, (err) => {
   if (err) {
