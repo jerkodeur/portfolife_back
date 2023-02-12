@@ -5,9 +5,10 @@ const secret = process.env.SECRET;
 
 const verifyPassword = (req, res, next) => {
   const { email, password } = req.body;
+  console.log(req);
   connexion.query(
     'SELECT * from admin WHERE email = ?',
-    email,
+    [email],
     (err, result) => {
       if (err) {
         return res.status(500).json({
