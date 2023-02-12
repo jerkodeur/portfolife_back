@@ -7,7 +7,7 @@ const verifyPassword = (req, res, next) => {
   const { email, password } = req.body;
   connexion.query(
     'SELECT * from admin WHERE email = ?',
-    req.body.email,
+    [email],
     (err, result) => {
       if (err) {
         return res.status(500).json({
@@ -18,7 +18,9 @@ const verifyPassword = (req, res, next) => {
       if (!result[0] || !bcrypt.compareSync(password, result[0].password)) {
         return res
           .status(401)
-          .json({ message: `Identifiants incorrects ${email} ${password}` });
+          .json({
+            message: `Identifiants incorrects ${err}${email} ${password}`
+          });
       }
       req.id = result[0].id;
       req.pseudo = result[0].pseudo;
