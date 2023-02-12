@@ -8,6 +8,7 @@ const app = express();
 const routes = require('./routes/index');
 const { getUserRole } = require('./services/verify');
 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cors('*'));
