@@ -17,7 +17,7 @@ const verifyPassword = (req, res, next) => {
       }
       if (!result[0] || !bcrypt.compareSync(password, result[0].password)) {
         return res.status(401).json({
-          message: `Identifiants incorrects ${req.body.email} ${req.body.password}`
+          message: `Identifiants incorrects ${req}`
         });
       }
       req.id = result[0].id;
