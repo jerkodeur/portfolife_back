@@ -10,7 +10,7 @@ const { getUserRole } = require('./services/verify');
 
 app.use(express.urlencoded({ extended: true }));
 
-app.use(cors());
+app.use(cors('*'));
 
 app.all('*', getUserRole);
 app.use('/admins', routes.admins);
